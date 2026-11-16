@@ -3,7 +3,7 @@ let resourceRequest;
 let listeningForSession;
 
 const readingMessages = {
-  no_access:'لا يظهر إذن الدروس لهذا الحساب. راجع إدارة مَدار.',
+  no_access:'اشتراك هذا الحساب غير مفعّل. تواصل مع إدارة مَدار لتفعيل الوصول إلى الدروس.',
   mfa_required:'يلزم تأكيد الرمز من تطبيق المصادقة.',
   active_elsewhere:'جلسة الدراسة نشطة على جهاز آخر.',
   too_many_requests:'انتظر دقيقة قبل فتح درس آخر.',

@@ -47,7 +47,8 @@ function madarSettings() {
           <label for="settings-current-password">كلمة المرور الحالية</label>
           <input class="input" id="settings-current-password" name="current" type="password" dir="ltr" autocomplete="current-password" required>
           <label for="settings-new-password">كلمة المرور الجديدة</label>
-          <input class="input" id="settings-new-password" name="password" type="password" dir="ltr" autocomplete="new-password" required>
+          <input class="input" id="settings-new-password" name="password" type="password" dir="ltr" autocomplete="new-password" aria-describedby="settings-password-help" required>
+          <p id="settings-password-help">اختر كلمة مرور فريدة من 12 حرفًا أو رمزًا على الأقل.</p>
           <label for="settings-confirm-password">أعد كتابة كلمة المرور الجديدة</label>
           <input class="input" id="settings-confirm-password" name="confirmation" type="password" dir="ltr" autocomplete="new-password" required>
           <button class="button" type="submit">احفظ كلمة المرور</button>
@@ -131,6 +132,10 @@ function bindMadarSettings() {
         ? 'تأكد من تطابق الكلمتين الجديدتين.' : 'اختر كلمة مرور مختلفة عن الحالية.';
       return;
     }
+    if ([...password].length < 12) {
+      passwordStatus.textContent = 'استخدم 12 حرفًا أو رمزًا على الأقل.';
+      return;
+    }
     submit.disabled = true;
     passwordStatus.textContent = 'جارٍ التحقق وتغيير كلمة المرور…';
     try {
@@ -154,6 +159,7 @@ function bindMadarSettings() {
 let experienceRoute;
 let routeAnimation;
 function finishRouteExperience(page, key) {
+  if (app.dataset.studyWatermark) markStudyFigures();
   const current = ['module','lesson','guide'].includes(page) ? (page==='guide'?'labs':'roadmap') : page;
   document.querySelectorAll('#nav a').forEach(link => {
     const active = link.hash === '#' + current;
