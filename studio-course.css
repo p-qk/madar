@@ -1,0 +1,55 @@
+.network-studio{max-width:1250px;margin:auto;display:grid;gap:24px}
+.studio-intro,.studio-story,.studio-inspector,.studio-controls{border:1px solid #395759;border-radius:18px;background:#14272e;padding:clamp(16px,3vw,28px)}
+.studio-intro{background:radial-gradient(ellipse at 15% 90%,#264b41,transparent 65%),#14272e}
+.studio-intro h2{font-size:clamp(24px,4vw,39px);line-height:1.4;margin:0 0 12px}
+.network-studio p{line-height:1.9;color:#bfced0}
+.studio-tabs,.studio-actions,.studio-controls fieldset{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.studio-controls select{margin:8px 0 12px;padding:9px;border:1px solid #71978a;border-radius:8px;background:#14242b;color:#eef7f4;max-width:100%;font:inherit}
+.studio-controls>label{display:block}
+.studio-controls fieldset{border:1px solid #395759;border-radius:8px;padding:10px;margin:0;min-width:0}
+.network-studio [aria-pressed=true]{background:#a7eed0;color:#112d24;border-color:#a7eed0}
+.studio-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;margin-block:16px}
+.studio-track{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:5px}
+.studio-node{min-width:0;text-align:center;background:#102029;border:1px solid #3d535e;border-radius:10px;padding:10px 3px}
+.studio-node strong,.studio-node small{display:block;overflow-wrap:anywhere}
+.studio-node small{font-size:10px;color:#acc2c9}
+.studio-node.arrival{border-color:#a7eed0;background:#224d42}
+.studio-node.departure{border-color:#c6b178}
+.studio-packet-line{height:2px;background:#52736e;position:relative;margin:18px 0 8px}
+.studio-packet-line span{position:absolute;top:-5px;left:var(--packet-end);width:12px;height:12px;border-radius:50%;background:#a7eed0;box-shadow:0 0 12px #a7eed0;transform:translateX(-50%);animation:route-packet .72s ease-out}
+@keyframes route-packet{from{left:var(--packet-start)}to{left:var(--packet-end)}}
+.studio-transfer{font-family:Consolas,monospace;color:#a7eed0}
+.studio-inspector ul{padding:0;list-style:none}
+.studio-inspector li{margin-block:8px;padding:8px;background:#0d1e25;border-radius:7px;overflow-wrap:anywhere;color:#c1efde}
+.studio-inspector a{color:#a7eed0;text-decoration:underline}
+.studio-actions{justify-content:space-between}
+.studio-actions button:disabled{opacity:.5;cursor:default}
+.studio-result{border-right:3px solid #a7eed0;padding-inline-start:10px}
+.studio-steps{
+  display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:14px 0 0;padding:8px;
+  border:1px solid #3c5f6a;border-radius:10px;background:#0e2230;
+}
+.studio-steps .ghost{min-width:40px;min-height:40px;padding:3px 7px;font:700 14px/1 Consolas,monospace;color:#c9dfe6}
+.studio-steps [aria-current=step]{color:#122d29;background:#a1edd3;border-color:#a1edd3}
+.studio-steps button:focus-visible{outline:2px solid #f8d98c;outline-offset:3px}
+.studio-capture{
+  margin-block:16px;padding:clamp(12px,3vw,22px);border:1px solid #426675;border-radius:16px;
+  background:radial-gradient(ellipse at 90% 25%,#204357,transparent 72%),#0c1e2c;
+}
+.studio-capture h3{margin:0}
+.studio-capture>p{margin:.35rem 0 1rem}
+.capture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.capture-side{padding:12px;border:1px solid #4d6873;border-radius:10px;background:#132934}
+.capture-side.is-selected{border-color:#82dbc1;box-shadow:inset 0 2px #82dbc1}
+.capture-side h4{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;margin:0;color:#edf9f6}
+.capture-side h4 span{font-size:.73em;color:#a3eacf}
+.capture-side dl{display:grid;gap:4px;margin:10px 0 0}
+.capture-side dl>div{padding:6px 8px;border-inline-start:2px solid transparent;border-radius:6px}
+.capture-side dl>div.is-changed{border-inline-start-color:#e9b975;background:#283a3d}
+.capture-side dt{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 8px;font-size:.77rem;line-height:1.3;color:#c6dee5}
+.capture-side dt span{color:#f5cb92}
+.capture-side dd{margin:4px 0 0;color:#ecfaf5;font-size:.8rem;overflow-wrap:anywhere}
+@media(max-width:520px){.capture-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.studio-grid{grid-template-columns:1fr}}
+@media(min-width:1101px){.reader-toc{max-height:calc(100vh - 50px);overflow:auto}}
+@media(prefers-reduced-motion:reduce){.studio-packet-line span{animation:none}}
