@@ -1,8 +1,8 @@
 const root = new URL('./',self.location.href);
 const prefix = 'madar-shell-' + root.pathname + ':';
-const cacheName = prefix + "75794fe26cf62f7e";
+const cacheName = prefix + "95bb2060d7671387";
 const index = new URL('index.html',root).href;
-const shellFiles = new Set([index,...["style.css?v=75794fe26cf62f7e","month.css?v=75794fe26cf62f7e","studio-course.css?v=75794fe26cf62f7e","lesson-visuals.css?v=75794fe26cf62f7e","login-page.css?v=75794fe26cf62f7e","site-experience.css?v=75794fe26cf62f7e","visual-design.css?v=75794fe26cf62f7e","lesson-sketches.css?v=75794fe26cf62f7e","lesson-figures.css?v=75794fe26cf62f7e","madar-core.js?v=75794fe26cf62f7e","cloud-progress.js?v=75794fe26cf62f7e","site-experience.js?v=75794fe26cf62f7e","login-page.js?v=75794fe26cf62f7e","course-access.js?v=75794fe26cf62f7e","madar-start.js?v=75794fe26cf62f7e","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","madar-release.js?v=75794fe26cf62f7e"].map(file=>new URL(file,root).href)]);
+const shellFiles = new Set([index,...["style.css?v=95bb2060d7671387","month.css?v=95bb2060d7671387","studio-course.css?v=95bb2060d7671387","lesson-visuals.css?v=95bb2060d7671387","login-page.css?v=95bb2060d7671387","site-experience.css?v=95bb2060d7671387","visual-design.css?v=95bb2060d7671387","lesson-sketches.css?v=95bb2060d7671387","lesson-figures.css?v=95bb2060d7671387","madar-core.js?v=95bb2060d7671387","cloud-progress.js?v=95bb2060d7671387","site-experience.js?v=95bb2060d7671387","login-page.js?v=95bb2060d7671387","course-access.js?v=95bb2060d7671387","madar-start.js?v=95bb2060d7671387","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","madar-release.js?v=95bb2060d7671387"].map(file=>new URL(file,root).href)]);
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(cacheName).then(cache=>cache.addAll([...shellFiles])).then(()=>self.skipWaiting()));
