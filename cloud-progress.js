@@ -191,6 +191,8 @@ async function syncAccountProgress() {
 }
 
 function clearCloudSession() {
+  stopReader();
+  entryFlow = null;
   clearTimeout(scheduledSave);
   clearTimeout(retrySave);
   scheduledSave = retrySave = undefined;
@@ -217,7 +219,9 @@ async function logOutOfMadar() {
   await queueCloud(async () => {
     if (session) {
       try {
-        await api('/auth/v1/logout?scope=local',{token:await accessToken(),method:'POST'});
+        const token = await accessToken();
+        if (globalThis.madarRelease?.reader) await readerRequest('leave',null,token).catch(()=>{});
+        await api('/auth/v1/logout?scope=local',{token,method:'POST'});
       } catch {}
     }
     clearCloudSession();
@@ -235,15 +239,18 @@ function updateAccountPassword(currentPassword, password) {
     const recent = await api('/auth/v1/token?grant_type=password',{
       method:'POST',body:JSON.stringify({email:account.email,password:currentPassword})
     });
+    const reader = globalThis.madarRelease?.reader;
+    let keepRecent = false;
     try {
       if (recent.user?.id!==account.id) throw new Error('تغيّر الحساب أثناء التحقق');
       const user = await api('/auth/v1/user',{
-        token:recent.access_token,method:'PUT',body:JSON.stringify({password,current_password:currentPassword})
+        token:reader?await accessToken():recent.access_token,
+        method:'PUT',body:JSON.stringify({password,current_password:currentPassword})
       });
-      setSession({...recent,user});
-    } catch (error) {
-      await api('/auth/v1/logout?scope=local',{token:recent.access_token,method:'POST'}).catch(()=>{});
-      throw error;
+      setSession({...(reader?session:recent),user});
+      keepRecent = !reader;
+    } finally {
+      if (!keepRecent) await api('/auth/v1/logout?scope=local',{token:recent.access_token,method:'POST'}).catch(()=>{});
     }
   });
 }

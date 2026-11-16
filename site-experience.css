@@ -151,3 +151,27 @@ body:has(.shell:not([hidden])){background:radial-gradient(ellipse at 15% 0,#132c
   .month-hero{grid-template-columns:1fr}
 }
 @media(max-width:405px){.settings-controls{grid-template-columns:minmax(0,1fr);gap:7px}.settings-controls select:not(:last-child){margin-bottom:8px}}
+
+[data-study-watermark] :is(.reader-cover,.reading-section,.lesson-sketch,.vfigure,.lesson-experiment,.lesson-lab,.network-studio,.quiz,.lesson-body)::after,
+[data-study-watermark]::after {
+  content: var(--study-watermark);
+  display: block;
+  clear: both;
+  margin-block-start: .65rem;
+  text-align: start;
+  width: max-content;
+  max-width: 100%;
+  padding: .2rem .45rem;
+  color: #a9bfca;
+  background: #0b1824;
+  border: 1px solid #334b5b;
+  border-radius: .35rem;
+  font: 500 .72rem/1.3 Consolas, monospace;
+  direction: ltr;
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  [data-study-watermark] :is(.reader-cover,.reading-section,.lesson-sketch,.vfigure,.lesson-experiment,.lesson-lab,.network-studio,.quiz,.lesson-body)::after,
+  [data-study-watermark]::after { color: #17242d; background: transparent; border-color: #59616a; }
+}

@@ -4,6 +4,8 @@ let restoringLogin = false;
 let loginNotice = '';
 let submittingEntry = false;
 let loginMotionControl;
+let entryFlow = null;
+let shownEntryFlow;
 
 const entryPacketPath = 'M 90 205 H 156 Q 182 205 200 185 L 239 145 Q 253 130 280 130 Q 307 130 321 145 L 360 185 Q 378 205 404 205 H 470';
 const entryIcons = {
@@ -68,6 +70,77 @@ function entryDiagram() {
   </svg>`;
 }
 
+function entryForm() {
+  const mode = entryFlow?.mode;
+  if (!mode) return `<form id="entry-form" method="post">
+    <label for="entry-email">البريد الإلكتروني</label>
+    <input id="entry-email" type="email" name="email" dir="ltr" autocomplete="username" required placeholder="name@example.com" autocapitalize="none" spellcheck="false">
+    <label for="entry-password">كلمة المرور</label>
+    <div class="entry-password">
+      <input id="entry-password" type="password" name="password" dir="ltr" autocomplete="current-password" required>
+      <button type="button" id="password-visibility" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button>
+    </div>
+    <p id="login-status" role="status">${esc(restoringLogin ? 'جارٍ التحقق من جلستك…' : loginNotice)}</p>
+    <button id="login-submit" class="entry-submit" ${restoringLogin ? 'disabled' : ''}><span>دخول إلى مَدار</span>${entryIcon('arrow')}</button>
+  </form>`;
+
+  const enrollment = entryFlow.enrollment;
+  const qr = enrollment?.qr;
+  const details = enrollment ? `<div class="entry-factor">
+    <p>امسح الرمز بتطبيق المصادقة، أو أدخل مفتاح الإعداد يدويًا من جهازك.</p>
+    ${qr? `<img src="${esc(qr)}" width="180" height="180" alt="رمز QR لتطبيق المصادقة">` : ''}
+    <details><summary>عرض مفتاح الإعداد</summary><code dir="ltr">${esc(enrollment.secret)}</code></details>
+  </div>` : '';
+  const help = mode==='setup'?'اربط حسابك بتطبيق المصادقة على هاتفك لفتح الدروس.'
+    : mode==='switch'?'جلسة دراستك على جهاز آخر. انقلها إلى هذا الجهاز لمواصلة الدراسة.'
+    : mode==='resume'?'تم التحقق من حسابك. يمكنك إعادة محاولة فتح الدروس.'
+    : 'أدخل الرمز المتغيّر الذي يظهر في تطبيق المصادقة.';
+  const label = mode==='setup'?'ربط تطبيق المصادقة':mode==='switch'?'نقل جلسة الدراسة إلى هنا'
+    : mode==='resume'?'افتح الدروس':'تحقّق وافتح الدروس';
+  return `<form id="entry-form" method="post">
+    <p>${help}</p>${details}
+    ${mode==='code'?`<label for="entry-code">رمز المصادقة</label>
+      <input id="entry-code" type="text" name="code" dir="ltr" inputmode="numeric"
+        autocomplete="one-time-code" pattern="[0-9٠-٩۰-۹]{6}" maxlength="6" required>`:''}
+    <p id="login-status" role="status">${esc(loginNotice)}</p>
+    <button id="login-submit" class="entry-submit"><span>${label}</span>${entryIcon('arrow')}</button>
+    <button type="button" id="entry-cancel" class="entry-control">الرجوع إلى تسجيل الدخول</button>
+  </form>`;
+}
+
+async function prepareEntryFactor(token) {
+  const user = await api('/auth/v1/user',{token});
+  const factor = user.factors?.find(item=>item.status==='verified' && item.factor_type==='totp');
+  entryFlow = factor ? {mode:'code',factorId:factor.id} : {mode:'setup'};
+}
+
+async function enrollEntryFactor() {
+  const factor = await api('/auth/v1/factors',{
+    token:await accessToken(),method:'POST',body:JSON.stringify({factor_type:'totp',issuer:'Madar'})
+  });
+  const qrCode = factor.totp?.qr_code?.trim() || '';
+  const qr = /<svg(?=[\s>])/.test(qrCode)?'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(qrCode)
+    : qrCode.startsWith('data:image/svg+xml')?qrCode:'';
+  entryFlow = {mode:'code',factorId:factor.id,enrollment:{qr,secret:factor.totp.secret}};
+}
+
+async function verifyEntryFactor(code) {
+  const token = await accessToken();
+  const path = '/auth/v1/factors/'+encodeURIComponent(entryFlow.factorId);
+  const options = {token,method:'POST'};
+  const challenge = await api(path+'/challenge',{...options,body:'{}'});
+  const verified = await api(path+'/verify',{
+    ...options,body:JSON.stringify({challenge_id:challenge.id,code})
+  });
+  if (!verified.access_token || sessionAssurance(verified.access_token)!=='aal2') {
+    throw new Error('The verification did not upgrade the session.');
+  }
+  const user = verified.user ?? session.user;
+  setSession({...verified,user,expires_at:verified.expires_at ?? Math.floor(Date.now()/1000)+verified.expires_in});
+  entryFlow = {mode:'resume'};
+  await openAuthenticatedCourse();
+}
+
 function showAccessScreen() {
   learningShell.hidden = !cloudReady;
   loginRoot.hidden = cloudReady;
@@ -79,29 +152,19 @@ function showAccessScreen() {
   }
   app.replaceChildren();
   document.title = 'مَدار | تسجيل الدخول';
-  if ($('#entry-form')) {
+  if ($('#entry-form') && shownEntryFlow===entryFlow) {
     if (submittingEntry) return false;
     const status = $('#login-status');
     status.textContent = restoringLogin ? 'جارٍ التحقق من جلستك…' : loginNotice;
     $('#login-submit').disabled = restoringLogin;
     return false;
   }
+  shownEntryFlow = entryFlow;
   loginRoot.innerHTML = `<div class="entry-grid">
     <section class="entry-form-card" aria-labelledby="entry-title">
       <div class="entry-brand"><span class="entry-brand-mark">${entryIcon('brand')}</span> مَدار</div>
-      <h1 id="entry-title">تسجيل الدخول</h1>
-      <p>تابع دروس الشبكات ومختبراتها من حيث توقّفت.</p>
-      <form id="entry-form" method="post">
-        <label for="entry-email">البريد الإلكتروني</label>
-        <input id="entry-email" type="email" name="email" dir="ltr" autocomplete="username" required placeholder="name@example.com" autocapitalize="none" spellcheck="false">
-        <label for="entry-password">كلمة المرور</label>
-        <div class="entry-password">
-          <input id="entry-password" type="password" name="password" dir="ltr" autocomplete="current-password" required>
-          <button type="button" id="password-visibility" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button>
-        </div>
-        <p id="login-status" role="status">${esc(restoringLogin ? 'جارٍ التحقق من جلستك…' : loginNotice)}</p>
-        <button id="login-submit" class="entry-submit" ${restoringLogin ? 'disabled' : ''}><span>دخول إلى مَدار</span>${entryIcon('arrow')}</button>
-      </form>
+      <h1 id="entry-title">${entryFlow?.mode==='switch'?'جلسة الدراسة':entryFlow?'التحقق بخطوتين':'تسجيل الدخول'}</h1>
+      ${entryForm()}
       <p class="entry-account-hint">${entryIcon('lock')} الدخول بحساب الطالب الذي وفّرته إدارة المنصة.</p>
     </section>
     <section class="entry-preview" aria-labelledby="entry-preview-title" data-direction="request">
@@ -121,7 +184,7 @@ function showAccessScreen() {
       </div>
     </section>
   </div>`;
-  $('#password-visibility').onclick = event => {
+  $('#password-visibility')?.addEventListener('click',event => {
     const button = event.currentTarget;
     const field = $('#entry-password');
     const visible = field.type === 'password';
@@ -129,7 +192,8 @@ function showAccessScreen() {
     button.textContent = visible ? 'إخفاء' : 'إظهار';
     button.setAttribute('aria-pressed', String(visible));
     button.setAttribute('aria-label', visible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
-  };
+  });
+  $('#entry-cancel')?.addEventListener('click',()=>{void logOutOfMadar();});
 
   const preview = $('.entry-preview');
   const motion = $('#entry-motion');
@@ -173,7 +237,8 @@ document.addEventListener('madar-display',() => {
 });
 
 function entryFailureMessage(error, restoring = false) {
-  if (error.code === 'course_access') return 'لا يظهر إذن الدروس لهذا الحساب. راجع إدارة مَدار.';
+  if (readingMessages[error.code]) return readingMessages[error.code];
+  if (error.status===429) return 'محاولات متكررة. انتظر قليلًا ثم أعد المحاولة.';
   if (error.status===400 || error.status===401) return restoring
     ? 'انتهت الجلسة. سجّل الدخول من جديد.'
     : 'تعذر الدخول. تحقق من البريد وكلمة المرور وتأكيد حساب الطالب.';
@@ -188,12 +253,21 @@ async function submitEntry(event) {
   const fields = new FormData(event.currentTarget);
   const status = $('#login-status');
   const label = button.querySelector('span');
+  const actionLabel = label.textContent;
+  const mode = entryFlow?.mode;
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
-  label.textContent = 'جارٍ تسجيل الدخول…';
+  label.textContent = 'جارٍ التحقق…';
   status.textContent = 'جارٍ التحقق من حسابك…';
   try {
     await queueCloud(async () => {
+      if (mode==='switch') return openAuthenticatedCourse(true);
+      if (mode==='resume') return openAuthenticatedCourse();
+      if (mode==='setup') return enrollEntryFactor();
+      if (mode==='code') {
+        const code = fields.get('code').replace(/[٠-٩۰-۹]/g,digit=>String(digit.charCodeAt(0)%16));
+        return verifyEntryFactor(code);
+      }
       const authenticated = await api('/auth/v1/token?grant_type=password', {
         method:'POST',
         body:JSON.stringify({email:fields.get('email').trim(),password:fields.get('password')})
@@ -202,14 +276,16 @@ async function submitEntry(event) {
       await openAuthenticatedCourse();
     });
     loginNotice = '';
-    render();
   } catch (error) {
-    clearCloudSession();
-    status.textContent = entryFailureMessage(error);
+    if (!mode || error.code==='no_access' || error.status===401) clearCloudSession();
+    loginNotice = mode==='code' && entryFlow?.mode==='code' && error.status===400
+      ? 'تعذّر تأكيد الرمز. استخدم الرمز الحالي من تطبيق المصادقة.'
+      : entryFailureMessage(error);
   } finally {
     submittingEntry = false;
     button.disabled = false;
     button.removeAttribute('aria-busy');
-    label.textContent = 'دخول إلى مَدار';
+    label.textContent = actionLabel;
+    render();
   }
 }

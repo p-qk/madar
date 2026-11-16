@@ -253,6 +253,15 @@
 #entry-path { margin: 0; color: var(--entry-soft); font-size: .95rem; }
 #entry-path bdi { color: #e7eefc; }
 
+#entry-form > p:not(#login-status), .entry-factor p { margin: 0; color: var(--entry-soft); line-height: 1.65; }
+.entry-factor { display: grid; gap: 10px; justify-items: start; }
+.entry-factor img { display: block; max-width: 100%; height: auto; padding: 9px; background: #fff; border-radius: 10px; }
+.entry-factor details { width: 100%; color: #d9e8f6; }
+.entry-factor summary { cursor: pointer; }
+.entry-factor code { display: block; margin-block: 6px; color: #baffec; overflow-wrap: anywhere; }
+#entry-code { letter-spacing: .24em; text-align: center; }
+#entry-cancel { min-height: 42px; }
+
 .entry-paused .entry-station--router .entry-station-light,
 .motion-paused .entry-station--router .entry-station-light { animation: none !important; }
 .motion-paused .entry-grid { animation: none; }
